@@ -269,22 +269,12 @@
               <h3>Internal Heat Sources</h3>
             </div>
             <div class="panel-body brush-panel-body">
-              <div class="geometry-preview-container">
-                <canvas id="geometry-preview" width="200" height="200" title="Click and drag to paint internal heat sources!"></canvas>
+              <div class="geometry-preview-container" style="flex: 0 0 auto;">
+                <canvas id="geometry-preview" width="120" height="120" title="Internal heat sources preview"></canvas>
               </div>
-              <div class="brush-controls" id="brush-controls">
-                <div class="form-row">
-                  <div class="form-group">
-                    <label for="brush-temp">Temp (°C)</label>
-                    <input type="number" id="brush-temp" value="200" step="1">
-                  </div>
-                  <div class="form-group">
-                    <label for="brush-size">Size</label>
-                    <input type="range" id="brush-size" min="1" max="15" value="4">
-                  </div>
-                </div>
-                <button id="clear-paint-btn" class="btn btn-secondary" style="width:100%; margin-top:8px;">
-                  Clear Paint
+              <div style="flex: 1; display: flex; align-items: center; justify-content: center;">
+                <button id="open-paint-btn" class="btn btn-secondary" style="width: 100%; height: 100%;">
+                  ✏️ Open Paint Editor
                 </button>
               </div>
             </div>
@@ -354,7 +344,42 @@
     </main>
   </div>
 
-  <script src="thermal-engine.js" defer></script>
-  <script src="app.js" defer></script>
+  <!-- Paint Editor Modal -->
+  <div class="modal-overlay" id="paint-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>✏️ Paint Internal Heat Sources</h3>
+        <button class="modal-close" id="close-paint-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-canvas-container">
+          <canvas id="paint-canvas"></canvas>
+        </div>
+        <div class="modal-sidebar">
+          <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 12px;">
+            Click and drag on the canvas to paint precise internal boundary conditions (heat sources/sinks).
+          </p>
+          <div class="form-group">
+            <label for="brush-temp">Brush Temp (°C)</label>
+            <input type="number" id="brush-temp" value="200" step="1">
+          </div>
+          <div class="form-group">
+            <label for="brush-size">Brush Size</label>
+            <input type="range" id="brush-size" min="1" max="15" value="4">
+          </div>
+          <button id="clear-paint-btn" class="btn btn-secondary" style="margin-top: 8px;">
+            Clear Paint
+          </button>
+          <button id="save-paint-btn" class="btn btn-primary" style="margin-top: auto;">
+            Save & Close
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="thermal-engine.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>

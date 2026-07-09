@@ -218,6 +218,11 @@ document.addEventListener('DOMContentLoaded', () => {
     imageThresholdVal: document.getElementById('image-threshold-val'),
     imageInvert: document.getElementById('image-invert'),
     geoPreview: document.getElementById('geometry-preview'),
+    openPaintBtn: document.getElementById('open-paint-btn'),
+    paintModal: document.getElementById('paint-modal'),
+    closePaintBtn: document.getElementById('close-paint-btn'),
+    savePaintBtn: document.getElementById('save-paint-btn'),
+    paintCanvas: document.getElementById('paint-canvas'),
     brushTemp: document.getElementById('brush-temp'),
     brushSize: document.getElementById('brush-size'),
     clearPaintBtn: document.getElementById('clear-paint-btn'),
@@ -635,9 +640,9 @@ document.addEventListener('DOMContentLoaded', () => {
   
   function paintOnCanvas(e) {
     if (!isPainting) return;
-    const rect = els.geoPreview.getBoundingClientRect();
-    const scaleX = els.geoPreview.width / rect.width;
-    const scaleY = els.geoPreview.height / rect.height;
+    const rect = els.paintCanvas.getBoundingClientRect();
+    const scaleX = els.paintCanvas.width / rect.width;
+    const scaleY = els.paintCanvas.height / rect.height;
     
     const px = (e.clientX - rect.left) * scaleX;
     const py = (e.clientY - rect.top) * scaleY;
@@ -669,17 +674,31 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     if (changed) {
-      Renderer.renderGeometryPreview(els.geoPreview, appState.mask, nx, ny, appState.internalBCMask, appState.internalBCTemps);
+      Renderer.renderGeometryPreview(els.paintCanvas, appState.mask, nx, ny, appState.internalBCMask, appState.internalBCTemps);
     }
   }
 
-  els.geoPreview.addEventListener('mousedown', (e) => { isPainting = true; paintOnCanvas(e); });
-  els.geoPreview.addEventListener('mousemove', paintOnCanvas);
+  function openPaintEditor() {
+    els.paintModal.classList.add('open');
+    Renderer.renderGeometryPreview(els.paintCanvas, appState.mask, appState.nx, appState.ny, appState.internalBCMask, appState.internalBCTemps);
+  }
+
+  function closePaintEditor() {
+    els.paintModal.classList.remove('open');
+    Renderer.renderGeometryPreview(els.geoPreview, appState.mask, appState.nx, appState.ny, appState.internalBCMask, appState.internalBCTemps);
+  }
+
+  els.openPaintBtn.addEventListener('click', openPaintEditor);
+  els.closePaintBtn.addEventListener('click', closePaintEditor);
+  els.savePaintBtn.addEventListener('click', closePaintEditor);
+
+  els.paintCanvas.addEventListener('mousedown', (e) => { isPainting = true; paintOnCanvas(e); });
+  els.paintCanvas.addEventListener('mousemove', paintOnCanvas);
   window.addEventListener('mouseup', () => { isPainting = false; });
   
   els.clearPaintBtn.addEventListener('click', () => {
     appState.internalBCMask.fill(0);
-    Renderer.renderGeometryPreview(els.geoPreview, appState.mask, appState.nx, appState.ny, appState.internalBCMask, appState.internalBCTemps);
+    Renderer.renderGeometryPreview(els.paintCanvas, appState.mask, appState.nx, appState.ny, appState.internalBCMask, appState.internalBCTemps);
   });
 
   els.matSelect.addEventListener('change', updateMaterial);

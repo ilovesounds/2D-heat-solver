@@ -35,6 +35,94 @@ body {
   font-family: 'JetBrains Mono', monospace;
 }
 
+/* PAINT MODAL */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(5px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.modal-overlay.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+.modal-content {
+  background: var(--bg-panel);
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  width: 90%;
+  max-width: 800px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+  transform: translateY(20px);
+  transition: transform 0.3s ease;
+}
+.modal-overlay.open .modal-content {
+  transform: translateY(0);
+}
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border-subtle);
+  background: rgba(0,0,0,0.2);
+}
+.modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+}
+.modal-close {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 24px;
+  cursor: pointer;
+}
+.modal-close:hover {
+  color: var(--text-primary);
+}
+.modal-body {
+  padding: 24px;
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+}
+.modal-canvas-container {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  background: #181828;
+  border-radius: 8px;
+  padding: 20px;
+  border: 1px solid var(--border-subtle);
+}
+#paint-canvas {
+  width: 100%;
+  max-width: 500px;
+  height: auto;
+  aspect-ratio: 1 / 1;
+  image-rendering: pixelated;
+  cursor: crosshair;
+  background: #181828;
+}
+.modal-sidebar {
+  width: 250px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
 .app {
   display: flex;
   flex-direction: column;
@@ -230,6 +318,9 @@ input[type=number], select {
   font-family: 'JetBrains Mono', monospace;
   font-size: 13px;
   transition: all 0.2s;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 input[type=number]:focus, select:focus {
@@ -415,6 +506,9 @@ input[type=checkbox] {
 .bc-edge select, .bc-edge input {
   padding: 6px;
   font-size: 12px;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 .bc-unit {
   font-size: 11px;
@@ -500,7 +594,7 @@ input[type=checkbox] {
 .top-toolbar .panel {
   margin-bottom: 0;
   flex: 1;
-  max-width: 450px;
+  max-width: 550px;
 }
 
 .canvas-wrapper {
