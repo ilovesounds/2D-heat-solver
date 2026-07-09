@@ -10,7 +10,6 @@
 </head>
 <body>
   <div class="app">
-    <!-- HEADER -->
     <header class="header">
       <div class="header-left">
         <div class="logo">
@@ -26,14 +25,8 @@
         </div>
       </div>
     </header>
-
-    <!-- MAIN LAYOUT: sidebar + canvas + stats -->
     <main class="main-layout">
-
-      <!-- LEFT SIDEBAR -->
       <aside class="sidebar">
-
-        <!-- Material Panel -->
         <section class="panel">
           <div class="panel-header">
             <span class="panel-icon">⚡</span>
@@ -58,7 +51,6 @@
               <div class="prop-row"><span>ρ</span><span id="mat-rho" class="mono">2700 kg/m³</span></div>
               <div class="prop-row"><span>cₚ</span><span id="mat-cp" class="mono">900 J/(kg·K)</span></div>
             </div>
-            <!-- Custom material inputs (hidden by default) -->
             <div id="custom-material-inputs" class="custom-inputs" style="display:none;">
               <div class="form-group">
                 <label for="custom-alpha-x">α_x (m²/s)</label>
@@ -71,8 +63,6 @@
             </div>
           </div>
         </section>
-
-        <!-- Grid & Domain Panel -->
         <section class="panel">
           <div class="panel-header">
             <span class="panel-icon">📐</span>
@@ -101,8 +91,6 @@
             </div>
           </div>
         </section>
-
-        <!-- Geometry Panel -->
         <section class="panel">
           <div class="panel-header">
             <span class="panel-icon">🔷</span>
@@ -119,8 +107,6 @@
                 <option value="image">Upload Image...</option>
               </select>
             </div>
-
-            <!-- Dynamic shape params -->
             <div id="shape-params">
               <div class="form-group" id="param-radius-group">
                 <label for="param-radius">Radius (fraction)</label>
@@ -148,8 +134,6 @@
                 <span class="range-value" id="param-inner-r-val">0.20</span>
               </div>
             </div>
-
-            <!-- Image upload -->
             <div id="image-upload-group" style="display:none;">
               <label class="upload-btn" for="image-upload">
                 <span class="panel-icon">📁</span> Upload CAD / Image
@@ -166,12 +150,8 @@
                 <label for="image-invert">Invert Mask</label>
               </div>
             </div>
-
           </div>
         </section>
-
-
-        <!-- Simulation Panel -->
         <section class="panel">
           <div class="panel-header">
             <span class="panel-icon">▶️</span>
@@ -194,7 +174,6 @@
                 <span class="btn-icon">↺</span> Reset
               </button>
             </div>
-            <!-- Progress bar -->
             <div class="progress-container" id="progress-container" style="display:none;">
               <div class="progress-bar">
                 <div class="progress-fill" id="progress-fill"></div>
@@ -204,13 +183,8 @@
           </div>
         </section>
       </aside>
-
-      <!-- CENTER: Visualization -->
       <div class="viz-area">
-      
-        <!-- TOP TOOLBAR -->
         <div class="top-toolbar">
-          <!-- Boundary Conditions Panel -->
           <section class="panel bc-panel">
             <div class="panel-header">
               <span class="panel-icon">🧱</span>
@@ -221,7 +195,6 @@
                 Applies to the 4 outer edges of the simulation box. If your shape (like a Disc) doesn't touch the box edges, these will have no effect. Paint directly on your shape using the <b>Paint Editor</b> instead!
               </p>
               <div class="bc-grid">
-                <!-- Top -->
                 <div class="bc-edge bc-top">
                   <label>Top</label>
                   <select id="bc-top-type">
@@ -231,7 +204,6 @@
                   <input type="text" id="bc-top-value" value="100">
                   <span class="bc-unit" id="bc-top-unit">°C</span>
                 </div>
-                <!-- Bottom -->
                 <div class="bc-edge bc-bottom">
                   <label>Bottom</label>
                   <select id="bc-bottom-type">
@@ -241,7 +213,6 @@
                   <input type="text" id="bc-bottom-value" value="25">
                   <span class="bc-unit" id="bc-bottom-unit">°C</span>
                 </div>
-                <!-- Left -->
                 <div class="bc-edge bc-left">
                   <label>Left</label>
                   <select id="bc-left-type">
@@ -251,7 +222,6 @@
                   <input type="text" id="bc-left-value" value="0">
                   <span class="bc-unit" id="bc-left-unit">W/m²</span>
                 </div>
-                <!-- Right -->
                 <div class="bc-edge bc-right">
                   <label>Right</label>
                   <select id="bc-right-type">
@@ -264,8 +234,6 @@
               </div>
             </div>
           </section>
-
-          <!-- Heat Brush Panel -->
           <section class="panel brush-panel">
             <div class="panel-header">
               <span class="panel-icon">🖌️</span>
@@ -283,10 +251,8 @@
             </div>
           </section>
         </div>
-
         <div class="canvas-wrapper">
           <canvas id="heatmap-canvas"></canvas>
-          <!-- Colorbar -->
           <div class="colorbar" id="colorbar">
             <canvas id="colorbar-canvas" width="30" height="300"></canvas>
             <div class="colorbar-labels">
@@ -296,8 +262,6 @@
             </div>
           </div>
         </div>
-
-        <!-- Playback controls -->
         <div class="playback-controls" id="playback-controls" style="display:none;">
           <button id="play-btn" class="btn btn-icon-only" title="Play/Pause">
             <span id="play-icon">▶</span>
@@ -315,8 +279,6 @@
             </select>
           </div>
         </div>
-
-        <!-- Stats bar -->
         <div class="stats-bar">
           <div class="stat">
             <span class="stat-label">Step</span>
@@ -346,8 +308,6 @@
       </div>
     </main>
   </div>
-
-  <!-- Paint Editor Modal -->
   <div class="modal-overlay" id="paint-modal">
     <div class="modal-content">
       <div class="modal-header">
@@ -380,8 +340,6 @@
       </div>
     </div>
   </div>
-
-  <!-- Scripts -->
   <script src="thermal-engine.js"></script>
   <script src="app.js"></script>
 </body>
