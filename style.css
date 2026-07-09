@@ -496,7 +496,7 @@ input[type=checkbox] {
 }
 .bc-edge {
   display: grid;
-  grid-template-columns: 45px 1fr 80px 35px;
+  grid-template-columns: 55px auto 1fr 35px;
   gap: 6px;
   align-items: center;
 }
