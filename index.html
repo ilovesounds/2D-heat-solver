@@ -167,82 +167,9 @@
               </div>
             </div>
 
-            <!-- Small geometry preview -->
-            <div class="geometry-preview-container">
-              <canvas id="geometry-preview" width="200" height="200" title="Click and drag to paint internal heat sources!"></canvas>
-            </div>
-            
-            <!-- Heat Brush UI -->
-            <div class="brush-controls" id="brush-controls">
-              <div class="form-row">
-                <div class="form-group">
-                  <label for="brush-temp">Brush Temp (°C)</label>
-                  <input type="number" id="brush-temp" value="200" step="1">
-                </div>
-                <div class="form-group">
-                  <label for="brush-size">Brush Size</label>
-                  <input type="range" id="brush-size" min="1" max="15" value="4">
-                </div>
-              </div>
-              <button id="clear-paint-btn" class="btn btn-secondary" style="width:100%; margin-top:8px;">
-                Clear Paint
-              </button>
-            </div>
           </div>
         </section>
 
-        <!-- Boundary Conditions Panel -->
-        <section class="panel">
-          <div class="panel-header">
-            <span class="panel-icon">🧱</span>
-            <h3>Boundary Conditions</h3>
-          </div>
-          <div class="panel-body">
-            <!-- Use a visual diagram representation -->
-            <div class="bc-grid">
-              <!-- Top -->
-              <div class="bc-edge bc-top">
-                <label>Top</label>
-                <select id="bc-top-type">
-                  <option value="dirichlet" selected>Fixed T</option>
-                  <option value="neumann">Flux</option>
-                </select>
-                <input type="text" id="bc-top-value" value="100">
-                <span class="bc-unit" id="bc-top-unit">°C</span>
-              </div>
-              <!-- Bottom -->
-              <div class="bc-edge bc-bottom">
-                <label>Bottom</label>
-                <select id="bc-bottom-type">
-                  <option value="dirichlet" selected>Fixed T</option>
-                  <option value="neumann">Flux</option>
-                </select>
-                <input type="text" id="bc-bottom-value" value="25">
-                <span class="bc-unit" id="bc-bottom-unit">°C</span>
-              </div>
-              <!-- Left -->
-              <div class="bc-edge bc-left">
-                <label>Left</label>
-                <select id="bc-left-type">
-                  <option value="dirichlet">Fixed T</option>
-                  <option value="neumann" selected>Flux</option>
-                </select>
-                <input type="text" id="bc-left-value" value="0">
-                <span class="bc-unit" id="bc-left-unit">W/m²</span>
-              </div>
-              <!-- Right -->
-              <div class="bc-edge bc-right">
-                <label>Right</label>
-                <select id="bc-right-type">
-                  <option value="dirichlet">Fixed T</option>
-                  <option value="neumann" selected>Flux</option>
-                </select>
-                <input type="text" id="bc-right-value" value="0">
-                <span class="bc-unit" id="bc-right-unit">W/m²</span>
-              </div>
-            </div>
-          </div>
-        </section>
 
         <!-- Simulation Panel -->
         <section class="panel">
@@ -280,6 +207,90 @@
 
       <!-- CENTER: Visualization -->
       <div class="viz-area">
+      
+        <!-- TOP TOOLBAR -->
+        <div class="top-toolbar">
+          <!-- Boundary Conditions Panel -->
+          <section class="panel bc-panel">
+            <div class="panel-header">
+              <span class="panel-icon">🧱</span>
+              <h3>Boundary Conditions</h3>
+            </div>
+            <div class="panel-body">
+              <div class="bc-grid">
+                <!-- Top -->
+                <div class="bc-edge bc-top">
+                  <label>Top</label>
+                  <select id="bc-top-type">
+                    <option value="dirichlet" selected>Fixed T</option>
+                    <option value="neumann">Flux</option>
+                  </select>
+                  <input type="text" id="bc-top-value" value="100">
+                  <span class="bc-unit" id="bc-top-unit">°C</span>
+                </div>
+                <!-- Bottom -->
+                <div class="bc-edge bc-bottom">
+                  <label>Bottom</label>
+                  <select id="bc-bottom-type">
+                    <option value="dirichlet" selected>Fixed T</option>
+                    <option value="neumann">Flux</option>
+                  </select>
+                  <input type="text" id="bc-bottom-value" value="25">
+                  <span class="bc-unit" id="bc-bottom-unit">°C</span>
+                </div>
+                <!-- Left -->
+                <div class="bc-edge bc-left">
+                  <label>Left</label>
+                  <select id="bc-left-type">
+                    <option value="dirichlet">Fixed T</option>
+                    <option value="neumann" selected>Flux</option>
+                  </select>
+                  <input type="text" id="bc-left-value" value="0">
+                  <span class="bc-unit" id="bc-left-unit">W/m²</span>
+                </div>
+                <!-- Right -->
+                <div class="bc-edge bc-right">
+                  <label>Right</label>
+                  <select id="bc-right-type">
+                    <option value="dirichlet">Fixed T</option>
+                    <option value="neumann" selected>Flux</option>
+                  </select>
+                  <input type="text" id="bc-right-value" value="0">
+                  <span class="bc-unit" id="bc-right-unit">W/m²</span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Heat Brush Panel -->
+          <section class="panel brush-panel">
+            <div class="panel-header">
+              <span class="panel-icon">🖌️</span>
+              <h3>Internal Heat Sources</h3>
+            </div>
+            <div class="panel-body brush-panel-body">
+              <div class="geometry-preview-container">
+                <canvas id="geometry-preview" width="200" height="200" title="Click and drag to paint internal heat sources!"></canvas>
+              </div>
+              <div class="brush-controls" id="brush-controls">
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="brush-temp">Temp (°C)</label>
+                    <input type="number" id="brush-temp" value="200" step="1">
+                  </div>
+                  <div class="form-group">
+                    <label for="brush-size">Size</label>
+                    <input type="range" id="brush-size" min="1" max="15" value="4">
+                  </div>
+                </div>
+                <button id="clear-paint-btn" class="btn btn-secondary" style="width:100%; margin-top:8px;">
+                  Clear Paint
+                </button>
+              </div>
+            </div>
+          </section>
+        </div>
+
         <div class="canvas-wrapper">
           <canvas id="heatmap-canvas"></canvas>
           <!-- Colorbar -->

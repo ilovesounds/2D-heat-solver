@@ -399,9 +399,9 @@ input[type=checkbox] {
 
 /* BC GRID */
 .bc-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 20px;
 }
 .bc-edge {
   display: grid;
@@ -424,7 +424,6 @@ input[type=checkbox] {
 
 /* PREVIEW */
 .geometry-preview-container {
-  margin-top: 16px;
   display: flex;
   justify-content: center;
   background: var(--bg-secondary);
@@ -435,14 +434,19 @@ input[type=checkbox] {
   background: #181828;
   border-radius: 4px;
   image-rendering: pixelated;
-  width: 100%;
-  max-width: 200px;
-  cursor: crosshair; /* Added crosshair */
+  width: 120px;
+  height: 120px;
+  cursor: crosshair;
+}
+.brush-panel-body {
+  display: flex;
+  gap: 16px;
+  align-items: center;
 }
 .brush-controls {
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 /* PROGRESS */
@@ -484,6 +488,19 @@ input[type=checkbox] {
   padding: 24px 32px;
   overflow: hidden;
   gap: 20px;
+}
+
+.top-toolbar {
+  display: flex;
+  gap: 20px;
+  width: 100%;
+  align-items: stretch;
+  justify-content: center;
+}
+.top-toolbar .panel {
+  margin-bottom: 0;
+  flex: 1;
+  max-width: 450px;
 }
 
 .canvas-wrapper {
