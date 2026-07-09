@@ -106,7 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('colorbar-min').textContent = vmin.toFixed(1);
     },
     
-    renderGeometryPreview(canvas, mask, nx, ny) {
+    renderGeometryPreview(canvas, mask, nx, ny, internalBCMask, internalBCTemps) {
       const ctx = canvas.getContext('2d');
       // Set to domain size, scale up via CSS
       if (canvas.width !== nx) canvas.width = nx;
@@ -118,11 +118,23 @@ document.addEventListener('DOMContentLoaded', () => {
       for (let k = 0; k < nx * ny; k++) {
         const idx = k * 4;
         if (mask[k] === 1) {
-          data[idx] = 0;      // R
-          data[idx+1] = 180;  // G
-          data[idx+2] = 255;  // B
-          data[idx+3] = 255;
+          if (internalBCMask && internalBCMask[k] === 1) {
+            const temp = internalBCTemps[k];
+            // Simple coloring: > 50 is warm/hot (red), < 50 is cool (blue)
+            if (temp > 50) {
+              data[idx] = 255; data[idx+1] = 50; data[idx+2] = 50; data[idx+3] = 255;
+            } else {
+              data[idx] = 50; data[idx+1] = 150; data[idx+2] = 255; data[idx+3] = 255;
+            }
+          } else {
+            // Default active region
+            data[idx] = 0;      // R
+            data[idx+1] = 180;  // G
+            data[idx+2] = 255;  // B
+            data[idx+3] = 255;
+          }
         } else {
+          // Void region
           data[idx] = 30;
           data[idx+1] = 30;
           data[idx+2] = 50;
@@ -155,7 +167,9 @@ document.addEventListener('DOMContentLoaded', () => {
     imageWidth: 0,
     imageHeight: 0,
     vmin: 0,
-    vmax: 100
+    vmax: 100,
+    internalBCMask: null,
+    internalBCTemps: null
   };
 
   let playbackReqId = null;
@@ -204,6 +218,9 @@ document.addEventListener('DOMContentLoaded', () => {
     imageThresholdVal: document.getElementById('image-threshold-val'),
     imageInvert: document.getElementById('image-invert'),
     geoPreview: document.getElementById('geometry-preview'),
+    brushTemp: document.getElementById('brush-temp'),
+    brushSize: document.getElementById('brush-size'),
+    clearPaintBtn: document.getElementById('clear-paint-btn'),
     
     bc: {
       top: { type: document.getElementById('bc-top-type'), val: document.getElementById('bc-top-value'), unit: document.getElementById('bc-top-unit') },
@@ -328,7 +345,11 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
     
-    Renderer.renderGeometryPreview(els.geoPreview, appState.mask, nx, ny);
+    // Reset paint arrays
+    appState.internalBCMask = new Uint8Array(nx * ny);
+    appState.internalBCTemps = new Float64Array(nx * ny);
+    
+    Renderer.renderGeometryPreview(els.geoPreview, appState.mask, nx, ny, appState.internalBCMask, appState.internalBCTemps);
   }
 
   function handleImageUpload(e) {
@@ -363,12 +384,28 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  function compileBCFunction(str) {
+    let expr = String(str).replace(/Math\./g, '')
+                          .replace(/sin/g, 'Math.sin')
+                          .replace(/cos/g, 'Math.cos')
+                          .replace(/PI/g, 'Math.PI')
+                          .replace(/exp/g, 'Math.exp');
+    try {
+      const fn = new Function("x", "y", "t", "return Number(" + expr + ");");
+      fn(0, 0, 0); // test eval
+      return fn;
+    } catch (e) {
+      console.warn("Invalid math expression:", str);
+      return new Function("x", "y", "t", "return 0;");
+    }
+  }
+
   function getBCConfig() {
     return {
-      top: { type: els.bc.top.type.value, value: parseFloat(els.bc.top.val.value) },
-      bottom: { type: els.bc.bot.type.value, value: parseFloat(els.bc.bot.val.value) },
-      left: { type: els.bc.left.type.value, value: parseFloat(els.bc.left.val.value) },
-      right: { type: els.bc.right.type.value, value: parseFloat(els.bc.right.val.value) },
+      top: { type: els.bc.top.type.value, fn: compileBCFunction(els.bc.top.val.value) },
+      bottom: { type: els.bc.bot.type.value, fn: compileBCFunction(els.bc.bot.val.value) },
+      left: { type: els.bc.left.type.value, fn: compileBCFunction(els.bc.left.val.value) },
+      right: { type: els.bc.right.type.value, fn: compileBCFunction(els.bc.right.val.value) },
     };
   }
 
@@ -431,6 +468,8 @@ document.addEventListener('DOMContentLoaded', () => {
       dt,
       nSteps,
       mask: appState.mask,
+      internalBCMask: appState.internalBCMask,
+      internalBCTemps: appState.internalBCTemps,
       bcConfig: appState.bcConfig,
       initTemp: appState.initTemp,
       snapshotInterval,
@@ -592,6 +631,57 @@ document.addEventListener('DOMContentLoaded', () => {
   // 6. EVENT LISTENER BINDINGS
   // ==========================================
   
+  let isPainting = false;
+  
+  function paintOnCanvas(e) {
+    if (!isPainting) return;
+    const rect = els.geoPreview.getBoundingClientRect();
+    const scaleX = els.geoPreview.width / rect.width;
+    const scaleY = els.geoPreview.height / rect.height;
+    
+    const px = (e.clientX - rect.left) * scaleX;
+    const py = (e.clientY - rect.top) * scaleY;
+    
+    const nx = appState.nx;
+    const ny = appState.ny;
+    const size = parseInt(els.brushSize.value);
+    const temp = parseFloat(els.brushTemp.value);
+    
+    const cx = Math.floor(px);
+    const cy = Math.floor(py);
+    
+    let changed = false;
+    for (let dy = -size; dy <= size; dy++) {
+      for (let dx = -size; dx <= size; dx++) {
+        if (dx * dx + dy * dy <= size * size) {
+          const ix = cx + dx;
+          const iy = cy + dy;
+          if (ix >= 0 && ix < nx && iy >= 0 && iy < ny) {
+            const idx = iy * nx + ix;
+            if (appState.mask[idx] === 1) { // Only paint on active mask
+              appState.internalBCMask[idx] = 1;
+              appState.internalBCTemps[idx] = temp;
+              changed = true;
+            }
+          }
+        }
+      }
+    }
+    
+    if (changed) {
+      Renderer.renderGeometryPreview(els.geoPreview, appState.mask, nx, ny, appState.internalBCMask, appState.internalBCTemps);
+    }
+  }
+
+  els.geoPreview.addEventListener('mousedown', (e) => { isPainting = true; paintOnCanvas(e); });
+  els.geoPreview.addEventListener('mousemove', paintOnCanvas);
+  window.addEventListener('mouseup', () => { isPainting = false; });
+  
+  els.clearPaintBtn.addEventListener('click', () => {
+    appState.internalBCMask.fill(0);
+    Renderer.renderGeometryPreview(els.geoPreview, appState.mask, appState.nx, appState.ny, appState.internalBCMask, appState.internalBCTemps);
+  });
+
   els.matSelect.addEventListener('change', updateMaterial);
   els.customAlphaX.addEventListener('input', updateMaterial);
   els.customAlphaY.addEventListener('input', updateMaterial);

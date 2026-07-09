@@ -136,40 +136,46 @@ const ThermalEngine = (function() {
   // BOUNDARY CONDITIONS
   // ==========================================
   
-  // bcConfig = { top: {type, value}, bottom: {type, value}, left: {type, value}, right: {type, value} }
-  function applyBoundaryConditions(T, nx, ny, bcConfig, dx, dy) {
-    // Top edge (row 0)
+  // bcConfig = { top: {type, fn}, bottom: {type, fn}, left: {type, fn}, right: {type, fn} }
+  function applyBoundaryConditions(T, nx, ny, bcConfig, dx, dy, t) {
+    // Top edge (row 0, y = 0)
     const top = bcConfig.top;
-    if (top.type === 'dirichlet') {
-      for (let i = 0; i < nx; i++) T[i] = top.value;
-    } else {
-      for (let i = 0; i < nx; i++) T[i] = T[nx + i] - top.value * dy;
+    for (let i = 0; i < nx; i++) {
+      const x = i * dx;
+      const v = top.fn(x, 0, t);
+      if (top.type === 'dirichlet') T[i] = v;
+      else T[i] = T[nx + i] - v * dy;
     }
     
-    // Bottom edge (last row)
+    // Bottom edge (last row, y = (ny-1)*dy)
     const bot = bcConfig.bottom;
     const lastRow = (ny - 1) * nx;
     const prevRow = (ny - 2) * nx;
-    if (bot.type === 'dirichlet') {
-      for (let i = 0; i < nx; i++) T[lastRow + i] = bot.value;
-    } else {
-      for (let i = 0; i < nx; i++) T[lastRow + i] = T[prevRow + i] + bot.value * dy;
+    const yBot = (ny - 1) * dy;
+    for (let i = 0; i < nx; i++) {
+      const x = i * dx;
+      const v = bot.fn(x, yBot, t);
+      if (bot.type === 'dirichlet') T[lastRow + i] = v;
+      else T[lastRow + i] = T[prevRow + i] + v * dy;
     }
     
-    // Left edge (col 0)
+    // Left edge (col 0, x = 0)
     const left = bcConfig.left;
-    if (left.type === 'dirichlet') {
-      for (let j = 0; j < ny; j++) T[j * nx] = left.value;
-    } else {
-      for (let j = 0; j < ny; j++) T[j * nx] = T[j * nx + 1] - left.value * dx;
+    for (let j = 0; j < ny; j++) {
+      const y = j * dy;
+      const v = left.fn(0, y, t);
+      if (left.type === 'dirichlet') T[j * nx] = v;
+      else T[j * nx] = T[j * nx + 1] - v * dx;
     }
     
-    // Right edge (last col)
+    // Right edge (last col, x = (nx-1)*dx)
     const right = bcConfig.right;
-    if (right.type === 'dirichlet') {
-      for (let j = 0; j < ny; j++) T[j * nx + nx - 1] = right.value;
-    } else {
-      for (let j = 0; j < ny; j++) T[j * nx + nx - 1] = T[j * nx + nx - 2] + right.value * dx;
+    const xRight = (nx - 1) * dx;
+    for (let j = 0; j < ny; j++) {
+      const y = j * dy;
+      const v = right.fn(xRight, y, t);
+      if (right.type === 'dirichlet') T[j * nx + nx - 1] = v;
+      else T[j * nx + nx - 1] = T[j * nx + nx - 2] + v * dx;
     }
   }
 
@@ -177,7 +183,7 @@ const ThermalEngine = (function() {
   // FDM SOLVER STEP
   // ==========================================
   
-  function step(T, Tnew, mask, nx, ny, alphaX, alphaY, dx, dy, dt) {
+  function step(T, Tnew, mask, nx, ny, alphaX, alphaY, dx, dy, dt, internalBCMask, internalBCTemps) {
     // T and Tnew are Float64Arrays of length ny*nx (row-major)
     // Copy all values first
     Tnew.set(T);
@@ -199,6 +205,15 @@ const ThermalEngine = (function() {
     for (let k = 0; k < ny * nx; k++) {
       Tnew[k] *= mask[k];
     }
+    
+    // Enforce internal painted BCs
+    if (internalBCMask && internalBCTemps) {
+      for (let k = 0; k < ny * nx; k++) {
+        if (internalBCMask[k] === 1) {
+          Tnew[k] = internalBCTemps[k];
+        }
+      }
+    }
   }
 
   // ==========================================
@@ -212,7 +227,7 @@ const ThermalEngine = (function() {
   // Uses setTimeout chunking to avoid blocking the UI thread.
   function run(config) {
     const { nx, ny, dx, dy, alphaX, alphaY, dt, nSteps, mask, bcConfig,
-            initTemp, snapshotInterval, onProgress } = config;
+            initTemp, snapshotInterval, onProgress, internalBCMask, internalBCTemps } = config;
     
     return new Promise((resolve) => {
       const T = new Float64Array(ny * nx).fill(initTemp);
@@ -228,8 +243,9 @@ const ThermalEngine = (function() {
       function doChunk() {
         const end = Math.min(currentStep + CHUNK_SIZE, nSteps);
         for (let n = currentStep; n < end; n++) {
-          applyBoundaryConditions(T, nx, ny, bcConfig, dx, dy);
-          step(T, Tnew, mask, nx, ny, alphaX, alphaY, dx, dy, dt);
+          const t = n * dt;
+          applyBoundaryConditions(T, nx, ny, bcConfig, dx, dy, t);
+          step(T, Tnew, mask, nx, ny, alphaX, alphaY, dx, dy, dt, internalBCMask, internalBCTemps);
           // Swap T and Tnew
           T.set(Tnew);
           
