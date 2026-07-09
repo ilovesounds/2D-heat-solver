@@ -505,11 +505,14 @@ input[type=checkbox] {
   font-weight: 500;
 }
 .bc-edge select, .bc-edge input {
-  padding: 6px;
+  padding: 6px 8px;
   font-size: 12px;
   min-width: 0;
   width: 100%;
   box-sizing: border-box;
+}
+.bc-edge select {
+  padding-right: 28px;
 }
 .bc-unit {
   font-size: 11px;
