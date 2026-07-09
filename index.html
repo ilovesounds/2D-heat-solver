@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ThermalFlux — 2D Heat Conduction Solver</title>
+  <meta name="description" content="High-precision 2D transient heat conduction simulator for anisotropic media. Runs entirely in your browser.">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app">
+    <!-- HEADER -->
+    <header class="header">
+      <div class="header-left">
+        <div class="logo">
+          <span class="logo-icon">🔥</span>
+          <h1>ThermalFlux</h1>
+        </div>
+        <p class="tagline">2D Transient Heat Conduction Solver</p>
+      </div>
+      <div class="header-right">
+        <div class="cfl-badge" id="cfl-badge">
+          <span class="cfl-dot"></span>
+          <span id="cfl-text">CFL: Ready</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- MAIN LAYOUT: sidebar + canvas + stats -->
+    <main class="main-layout">
+
+      <!-- LEFT SIDEBAR -->
+      <aside class="sidebar">
+
+        <!-- Material Panel -->
+        <section class="panel">
+          <div class="panel-header">
+            <span class="panel-icon">⚡</span>
+            <h3>Material</h3>
+          </div>
+          <div class="panel-body">
+            <div class="form-group">
+              <label for="material-select">Select Material</label>
+              <select id="material-select">
+                <option value="aluminum" selected>Aluminum</option>
+                <option value="copper">Copper</option>
+                <option value="steel">Steel (Carbon)</option>
+                <option value="iron">Iron</option>
+                <option value="titanium">Titanium</option>
+                <option value="glass">Glass</option>
+                <option value="custom">Custom...</option>
+              </select>
+            </div>
+            <div class="material-props" id="material-info">
+              <div class="prop-row"><span>α</span><span id="mat-alpha" class="mono">9.70e-5 m²/s</span></div>
+              <div class="prop-row"><span>k</span><span id="mat-k" class="mono">237 W/(m·K)</span></div>
+              <div class="prop-row"><span>ρ</span><span id="mat-rho" class="mono">2700 kg/m³</span></div>
+              <div class="prop-row"><span>cₚ</span><span id="mat-cp" class="mono">900 J/(kg·K)</span></div>
+            </div>
+            <!-- Custom material inputs (hidden by default) -->
+            <div id="custom-material-inputs" class="custom-inputs" style="display:none;">
+              <div class="form-group">
+                <label for="custom-alpha-x">α_x (m²/s)</label>
+                <input type="number" id="custom-alpha-x" value="9.7e-5" step="1e-6">
+              </div>
+              <div class="form-group">
+                <label for="custom-alpha-y">α_y (m²/s)</label>
+                <input type="number" id="custom-alpha-y" value="9.7e-5" step="1e-6">
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Grid & Domain Panel -->
+        <section class="panel">
+          <div class="panel-header">
+            <span class="panel-icon">📐</span>
+            <h3>Grid & Domain</h3>
+          </div>
+          <div class="panel-body">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="grid-nx">Nx</label>
+                <input type="number" id="grid-nx" value="100" min="10" max="300" step="10">
+              </div>
+              <div class="form-group">
+                <label for="grid-ny">Ny</label>
+                <input type="number" id="grid-ny" value="100" min="10" max="300" step="10">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="domain-lx">Lx (m)</label>
+                <input type="number" id="domain-lx" value="0.1" step="0.01" min="0.01">
+              </div>
+              <div class="form-group">
+                <label for="domain-ly">Ly (m)</label>
+                <input type="number" id="domain-ly" value="0.1" step="0.01" min="0.01">
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Geometry Panel -->
+        <section class="panel">
+          <div class="panel-header">
+            <span class="panel-icon">🔷</span>
+            <h3>Geometry</h3>
+          </div>
+          <div class="panel-body">
+            <div class="form-group">
+              <label for="shape-select">Shape</label>
+              <select id="shape-select">
+                <option value="plate">Full Plate</option>
+                <option value="disc" selected>Disc</option>
+                <option value="beam">Beam</option>
+                <option value="ring">Ring</option>
+                <option value="image">Upload Image...</option>
+              </select>
+            </div>
+
+            <!-- Dynamic shape params -->
+            <div id="shape-params">
+              <div class="form-group" id="param-radius-group">
+                <label for="param-radius">Radius (fraction)</label>
+                <input type="range" id="param-radius" min="0.1" max="0.49" step="0.01" value="0.4">
+                <span class="range-value" id="param-radius-val">0.40</span>
+              </div>
+              <div class="form-group" id="param-width-group" style="display:none;">
+                <label for="param-width">Width (fraction)</label>
+                <input type="range" id="param-width" min="0.1" max="1.0" step="0.01" value="0.8">
+                <span class="range-value" id="param-width-val">0.80</span>
+              </div>
+              <div class="form-group" id="param-height-group" style="display:none;">
+                <label for="param-height">Height (fraction)</label>
+                <input type="range" id="param-height" min="0.1" max="1.0" step="0.01" value="0.3">
+                <span class="range-value" id="param-height-val">0.30</span>
+              </div>
+              <div class="form-group" id="param-outer-r-group" style="display:none;">
+                <label for="param-outer-r">Outer Radius</label>
+                <input type="range" id="param-outer-r" min="0.1" max="0.49" step="0.01" value="0.4">
+                <span class="range-value" id="param-outer-r-val">0.40</span>
+              </div>
+              <div class="form-group" id="param-inner-r-group" style="display:none;">
+                <label for="param-inner-r">Inner Radius</label>
+                <input type="range" id="param-inner-r" min="0.05" max="0.4" step="0.01" value="0.2">
+                <span class="range-value" id="param-inner-r-val">0.20</span>
+              </div>
+            </div>
+
+            <!-- Image upload -->
+            <div id="image-upload-group" style="display:none;">
+              <label class="upload-btn" for="image-upload">
+                <span>📁 Choose Image</span>
+                <input type="file" id="image-upload" accept="image/*">
+              </label>
+              <span id="image-filename" class="filename"></span>
+              <div class="form-group">
+                <label for="image-threshold">Threshold</label>
+                <input type="range" id="image-threshold" min="0" max="255" value="127">
+                <span class="range-value" id="image-threshold-val">127</span>
+              </div>
+              <div class="form-group checkbox-group">
+                <input type="checkbox" id="image-invert">
+                <label for="image-invert">Invert Mask</label>
+              </div>
+            </div>
+
+            <!-- Small geometry preview -->
+            <div class="geometry-preview-container">
+              <canvas id="geometry-preview" width="200" height="200"></canvas>
+            </div>
+          </div>
+        </section>
+
+        <!-- Boundary Conditions Panel -->
+        <section class="panel">
+          <div class="panel-header">
+            <span class="panel-icon">🧱</span>
+            <h3>Boundary Conditions</h3>
+          </div>
+          <div class="panel-body">
+            <!-- Use a visual diagram representation -->
+            <div class="bc-grid">
+              <!-- Top -->
+              <div class="bc-edge bc-top">
+                <label>Top</label>
+                <select id="bc-top-type">
+                  <option value="dirichlet" selected>Fixed T</option>
+                  <option value="neumann">Flux</option>
+                </select>
+                <input type="number" id="bc-top-value" value="100" step="1">
+                <span class="bc-unit" id="bc-top-unit">°C</span>
+              </div>
+              <!-- Bottom -->
+              <div class="bc-edge bc-bottom">
+                <label>Bottom</label>
+                <select id="bc-bottom-type">
+                  <option value="dirichlet" selected>Fixed T</option>
+                  <option value="neumann">Flux</option>
+                </select>
+                <input type="number" id="bc-bottom-value" value="25" step="1">
+                <span class="bc-unit" id="bc-bottom-unit">°C</span>
+              </div>
+              <!-- Left -->
+              <div class="bc-edge bc-left">
+                <label>Left</label>
+                <select id="bc-left-type">
+                  <option value="dirichlet">Fixed T</option>
+                  <option value="neumann" selected>Flux</option>
+                </select>
+                <input type="number" id="bc-left-value" value="0" step="1">
+                <span class="bc-unit" id="bc-left-unit">W/m²</span>
+              </div>
+              <!-- Right -->
+              <div class="bc-edge bc-right">
+                <label>Right</label>
+                <select id="bc-right-type">
+                  <option value="dirichlet">Fixed T</option>
+                  <option value="neumann" selected>Flux</option>
+                </select>
+                <input type="number" id="bc-right-value" value="0" step="1">
+                <span class="bc-unit" id="bc-right-unit">W/m²</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Simulation Panel -->
+        <section class="panel">
+          <div class="panel-header">
+            <span class="panel-icon">▶️</span>
+            <h3>Simulation</h3>
+          </div>
+          <div class="panel-body">
+            <div class="form-group">
+              <label for="sim-time">Total Time (s)</label>
+              <input type="number" id="sim-time" value="0.5" step="0.1" min="0.01">
+            </div>
+            <div class="form-group">
+              <label for="init-temp">Initial Temp (°C)</label>
+              <input type="number" id="init-temp" value="25" step="1">
+            </div>
+            <div class="btn-row">
+              <button id="run-btn" class="btn btn-primary">
+                <span class="btn-icon">▶</span> Run
+              </button>
+              <button id="reset-btn" class="btn btn-secondary">
+                <span class="btn-icon">↺</span> Reset
+              </button>
+            </div>
+            <!-- Progress bar -->
+            <div class="progress-container" id="progress-container" style="display:none;">
+              <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill"></div>
+              </div>
+              <span class="progress-text" id="progress-text">0%</span>
+            </div>
+          </div>
+        </section>
+      </aside>
+
+      <!-- CENTER: Visualization -->
+      <div class="viz-area">
+        <div class="canvas-wrapper">
+          <canvas id="heatmap-canvas"></canvas>
+          <!-- Colorbar -->
+          <div class="colorbar" id="colorbar">
+            <canvas id="colorbar-canvas" width="30" height="300"></canvas>
+            <div class="colorbar-labels">
+              <span id="colorbar-max" class="mono">100</span>
+              <span id="colorbar-mid" class="mono">62.5</span>
+              <span id="colorbar-min" class="mono">25</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Playback controls -->
+        <div class="playback-controls" id="playback-controls" style="display:none;">
+          <button id="play-btn" class="btn btn-icon-only" title="Play/Pause">
+            <span id="play-icon">▶</span>
+          </button>
+          <button id="step-back-btn" class="btn btn-icon-only" title="Previous Frame">⏮</button>
+          <input type="range" id="frame-slider" min="0" max="100" value="0" class="frame-slider">
+          <button id="step-fwd-btn" class="btn btn-icon-only" title="Next Frame">⏭</button>
+          <div class="speed-control">
+            <label for="playback-speed">Speed</label>
+            <select id="playback-speed">
+              <option value="0.5">0.5x</option>
+              <option value="1" selected>1x</option>
+              <option value="2">2x</option>
+              <option value="5">5x</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Stats bar -->
+        <div class="stats-bar">
+          <div class="stat">
+            <span class="stat-label">Step</span>
+            <span class="stat-value mono" id="stat-step">0</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Time</span>
+            <span class="stat-value mono" id="stat-time">0.000 s</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Δt</span>
+            <span class="stat-value mono" id="stat-dt">—</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">T_min</span>
+            <span class="stat-value mono" id="stat-tmin">—</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">T_max</span>
+            <span class="stat-value mono" id="stat-tmax">—</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Status</span>
+            <span class="stat-value" id="stat-status">Idle</span>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="thermal-engine.js" defer></script>
+  <script src="app.js" defer></script>
+</body>
+</html>
