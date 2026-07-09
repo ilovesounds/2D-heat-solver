@@ -195,9 +195,17 @@ const ThermalEngine = (function() {
     for (let j = 1; j < ny - 1; j++) {
       for (let i = 1; i < nx - 1; i++) {
         const idx = j * nx + i;
-        Tnew[idx] = T[idx] + 
-          rx * (T[idx + 1] - 2 * T[idx] + T[idx - 1]) +   // x-direction: T[j][i+1], T[j][i], T[j][i-1]
-          ry * (T[idx + nx] - 2 * T[idx] + T[idx - nx]);   // y-direction: T[j+1][i], T[j][i], T[j-1][i]
+        if (mask[idx] === 0) continue;
+        
+        const Tc = T[idx];
+        const Tl = mask[idx - 1] === 1 ? T[idx - 1] : Tc;
+        const Tr = mask[idx + 1] === 1 ? T[idx + 1] : Tc;
+        const Tt = mask[idx - nx] === 1 ? T[idx - nx] : Tc;
+        const Tb = mask[idx + nx] === 1 ? T[idx + nx] : Tc;
+        
+        Tnew[idx] = Tc + 
+          rx * (Tr - 2 * Tc + Tl) +
+          ry * (Tb - 2 * Tc + Tt);
       }
     }
     
